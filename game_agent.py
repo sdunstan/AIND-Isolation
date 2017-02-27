@@ -37,8 +37,17 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    # TODO: finish this function!
-    raise NotImplementedError
+    # TODO: tune theta1 and theta2 to weights that maximze winning. For now, just return 1
+    # We could use gradient descent to find values for theta that maximize wins.
+    # Ahother option is to weight theta1 and theta2 based on how close you are to the endgame.
+    # Nash equilibrium?
+    theta0 = 0.0
+    theta1 = 1.0
+    theta2 = -1.0
+    my_moves = len(game.get_legal_moves(player))
+    opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    return theta0 + (theta1 * my_moves) + (theta2 * opponent_moves)
 
 
 class CustomPlayer:
@@ -129,14 +138,14 @@ class CustomPlayer:
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+            _, move = self.minimax(game, 1, True)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
             pass
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -172,8 +181,11 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        score = 0.0
+        move = (-1, -1)
+
+        return (score, move)
+
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
@@ -216,5 +228,7 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        score = 0.0
+        move = (-1, -1)
+
+        return (score, move)
