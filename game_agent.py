@@ -1,3 +1,4 @@
+# pylint: disable=C0103, C0301
 """This file contains all the classes you must complete for this project.
 
 You can use the test cases in agent_test.py to help during development, and
@@ -6,8 +7,7 @@ augment the test suite with your own test cases to further test your code.
 You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
-import random
-
+import logging
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
@@ -193,67 +193,50 @@ class CustomPlayer:
                 evaluation function directly.
         """
 
+        """
+        Recursion example for depth 3:
+        1. level 1's children are pushed on depth 2, max
+        2. level 2's children are pushed on depth 1, min
+        3. level 3's children are pushed on depth 0, max
+        4. we are at depth 0 so score level 3's children
+        5. level 3 unwound. max scores returned to level 2
+        6. level 2 unwound. min scores returned to level 1
+        7. level 1 unwound. max scores returned
+        """
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        legal_moves = game.get_legal_moves()
+        legal_moves = game.get_legal_moves() # Gets active player's moves
         if len(legal_moves) <= 0:
             return (self.score(game, game.active_player), (-1, -1))
 
-        # get score for active player's opponent position since game has been advanced
-        if depth == 0: # return best move from the board
-            score_player = game.__player_2__ if maximizing_player else game.__player_1__
+        if depth == 0:
+            score_player = game.__player_1__
             score_move = (self.score(game, score_player),
                           game.get_player_location(score_player))
             return score_move
 
         scores = []
+        score_getter = lambda k: float(k[0])
         for move in legal_moves:
             new_game = game.forecast_move(move)
-            scores.append(self.minimax(new_game, depth-1, False))
+            score = self.minimax(new_game, depth-1, not maximizing_player)
+            scores.append((score[0], score[1], new_game))
         if maximizing_player:
-            best_value = max(scores)
+            best_value = max(scores, key=score_getter)
         else:
-            best_value = min(scores)
+            best_value = min(scores, key=score_getter)
 
-        print('scores are {}\nmoving to {} because score is {}. level {}\n\n'
-              .format(scores, best_value[1], best_value[0], depth))
-        return best_value
+        logging.debug('scores are %s\nmoving to %s because score is %f. level %d. player %s\n%s\n\n',
+                      scores,
+                      best_value[1],
+                      best_value[0],
+                      depth,
+                      best_value[2].active_player,
+                      best_value[2].to_string())
 
-
-        # optimum_move = (0, (-1, -1))
-        # if self.iterative:
-        #     print("PERFORMING ITERATIVE DEEPENING")
-        #     for depth_index in range(1, depth+1):
-        #         scores = [(self.score(game.forecast_move(move), game.active_player), move)
-        #                   for move in legal_moves]
-        #         if maximizing_player:
-        #             print("pick max from {}".format(scores))
-        #             optimum_move = max(scores)
-        #         else:
-        #             print("pick min from {}".format(scores))
-        #             optimum_move = min(scores)
-        #         print("Optimum move at level {} is {}".format(depth_index, optimum_move))
-        #         # self.minimax(game.forecast_move(optimum_move), depth+1, not maximizing_player)
-
-        #     return optimum_move
-        # else:
-        #     # 1. Walk down to the provided depth
-        #     # 2. Recursively 
-        #     new_game = game
-        #     for index in range(depth):
-        #         for move in legal_moves:
-        #             new_game = new_game.forecast_move(move)
-        #             score = self.score(new_game, game.active_player)
-        #             boards.append((score, new_game)
-        #         if maximizing_player and ((index % 2) == 0):
-        #             print("pick max from {}".format(scores))
-        #             optimum_board = max(scores)
-        #         else:
-        #             print("pick min from {}".format(scores))
-        #             optimum_board = min(scores)
-        #         legal_moves = optimum_board.get_legal_moves()
-        #     return self.minimax(optimum_board, depth-1, not maximizing_player)
+        return (best_value[0], best_value[2].get_player_location(game.active_player))
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
