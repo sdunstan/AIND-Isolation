@@ -295,7 +295,7 @@ class Board(object):
                     out += '-'
 
                 out += ' | '
-            out += '\n\r'
+            out += '\n'
 
         return out
 
