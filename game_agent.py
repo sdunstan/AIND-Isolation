@@ -8,6 +8,7 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import logging
+logging.basicConfig(filename="isolation-debug.log", level=logging.DEBUG)
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
@@ -203,6 +204,10 @@ class CustomPlayer:
         6. level 2 unwound. min scores returned to level 1
         7. level 1 unwound. max scores returned
         """
+
+        if self.iterative:
+            # do something cool!
+            pass
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()

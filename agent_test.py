@@ -228,7 +228,7 @@ class Project1Test(unittest.TestCase):
         return agentUT, board
 
     @timeout(5)
-    @unittest.skip("Skip eval function test.")  # Uncomment this line to skip test
+    # @unittest.skip("Skip eval function test.")  # Uncomment this line to skip test
     def test_heuristic(self):
         """ Test output interface of heuristic score function interface."""
 
@@ -244,7 +244,7 @@ class Project1Test(unittest.TestCase):
             "The heuristic function should return a floating point")
 
     timeout(5)
-    @unittest.skip("Skip simple minimax test.")  # Uncomment this line to skip test
+    # @unittest.skip("Skip simple minimax test.")  # Uncomment this line to skip test
     def test_minimax_interface(self):
         """ Test CustomPlayer.minimax interface with simple input """
         h, w = 7, 7  # board size
@@ -275,7 +275,7 @@ class Project1Test(unittest.TestCase):
                              "branch being searched."))
 
     timeout(5)
-    @unittest.skip("Skip alphabeta test.")  # Uncomment this line to skip test
+    # @unittest.skip("Skip alphabeta test.")  # Uncomment this line to skip test
     def test_alphabeta_interface(self):
         """ Test CustomPlayer.alphabeta interface with simple input """
         h, w = 9, 9  # board size
@@ -306,7 +306,7 @@ class Project1Test(unittest.TestCase):
                              "branch being searched."))
 
     @timeout(5)
-    @unittest.skip("Skip get_move test.")  # Uncomment this line to skip test
+    # @unittest.skip("Skip get_move test.")  # Uncomment this line to skip test
     def test_get_move_interface(self):
         """ Test CustomPlayer.get_move interface with simple input """
         h, w = 9, 9  # board size
@@ -406,11 +406,9 @@ class Project1Test(unittest.TestCase):
                                           loc1=starting_location,
                                           loc2=adversary_location)
 
-            print('************ testing depth {} for board \n{}'.format(test_depth, board.to_string()))
             # disable search timeout by returning a constant value
             agentUT.time_left = lambda: 1e3
             _, move = agentUT.minimax(board, test_depth)
-            print('move is {}'.format(move))
 
             num_explored_valid = board.counts[0] == counts[idx][0]
             num_unique_valid = board.counts[1] == counts[idx][1]
@@ -425,7 +423,7 @@ class Project1Test(unittest.TestCase):
                 method, test_depth, expected_moves[idx // 2], move))
 
     @timeout(20)
-    @unittest.skip("Skip alpha-beta test.")  # Uncomment this line to skip test
+    # @unittest.skip("Skip alpha-beta test.")  # Uncomment this line to skip test
     def test_alphabeta(self):
         """ Test CustomPlayer.alphabeta
 
