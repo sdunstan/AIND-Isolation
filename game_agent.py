@@ -8,7 +8,7 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import logging
-logging.basicConfig(filename="isolation-debug.log", level=logging.DEBUG)
+logging.basicConfig(filename="isolation-debug.log", filemode="w", level=logging.DEBUG)
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
@@ -95,8 +95,7 @@ class CustomPlayer:
         self.method = method
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
-
-        self.current_depth = 0
+        logging.debug("******* INIT *********")
 
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
@@ -141,7 +140,7 @@ class CustomPlayer:
         # immediately if there are no legal moves
 
         self.current_depth = 0
-        move = (-1,-1)
+        move = (-1, -1)
 
         try:
             # The search method call (alpha beta or minimax) should happen in
@@ -149,7 +148,10 @@ class CustomPlayer:
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
             if self.method == 'minimax':
-                _, move = self.minimax(game, self.search_depth, True)
+                maximizing_player = game.active_player == self
+                logging.info("Finding best move for player %s maximizing is %s",
+                             game.active_player, maximizing_player)
+                _, move = self.minimax(game, self.search_depth, maximizing_player)
             elif self.method == 'alphabeta':
                 _, move = self.alphabeta(game, 3)
             else:
@@ -206,42 +208,57 @@ class CustomPlayer:
         """
 
         if self.iterative:
-            # do something cool!
-            pass
+            __depth__ = 0
+            best_score = float("-inf")
+            best_move = (-1, -1)
+            self.iterative = False
+            while True:
+                __depth__ += 1
+                try:
+                    score, move = self.minimax(game, __depth__, maximizing_player)
+                except (Timeout, TimeoutError):
+                    break
+                if move != (-1, -1):
+                    best_move = move
+                    best_score = score
+                else:
+                    break
+            self.iterative = True
+            return best_score, best_move
 
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
         legal_moves = game.get_legal_moves() # Gets active player's moves
-        if len(legal_moves) <= 0:
+        if not legal_moves:
             return (self.score(game, game.active_player), (-1, -1))
 
+        # You only use the score from the leaf node, not the move.
         if depth == 0:
-            score_player = game.__player_1__
-            score_move = (self.score(game, score_player),
-                          game.get_player_location(score_player))
-            return score_move
+            scoring_move = (self.score(game, self), None)
+            logging.debug("Leaf score: %s\n%s", scoring_move, game.to_string())
+            return scoring_move
 
-        scores = []
-        score_getter = lambda k: float(k[0])
+        # create the worst possible score/move tuple depending on if this is the maximizing or minimizing player
+        best_score = float("-inf") if maximizing_player else float("inf")
+        best_move = None
         for move in legal_moves:
-            new_game = game.forecast_move(move)
-            score = self.minimax(new_game, depth-1, not maximizing_player)
-            scores.append((score[0], score[1], new_game))
+            candidate_score, _ = self.minimax(game.forecast_move(move), depth-1, not maximizing_player)
+            if maximizing_player:
+                candidate_score = max(best_score, candidate_score)
+            else:
+                candidate_score = min(best_score, candidate_score)
+            # if the best score was replaced, it is the best score at the moment
+            if best_score != candidate_score:
+                best_move = move
+                best_score = candidate_score
+
         if maximizing_player:
-            best_value = max(scores, key=score_getter)
+            logging.debug(">>>> Found max score %s move %s for depth %d", best_score, best_move, depth-1)
         else:
-            best_value = min(scores, key=score_getter)
+            logging.debug(">>>> Found min score %s move %s for depth %d", best_score, best_move, depth-1)
 
-        logging.debug('scores are %s\nmoving to %s because score is %f. level %d. player %s\n%s\n\n',
-                      scores,
-                      best_value[1],
-                      best_value[0],
-                      depth,
-                      best_value[2].active_player,
-                      best_value[2].to_string())
-
-        return (best_value[0], best_value[2].get_player_location(game.active_player))
+        return best_score, best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
@@ -284,7 +301,37 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        score = 0.0
-        move = (-1, -1)
+        legal_moves = game.get_legal_moves() # Gets active player's moves
+        if len(legal_moves) <= 0:
+            return (self.score(game, game.active_player), (-1, -1))
 
-        return (score, move)
+        # You only use the score from the leaf node, not the move.
+        if depth == 0:
+            scoring_move = (self.score(game, self), None)
+            logging.debug("Leaf score: %s\n%s", scoring_move, game.to_string())
+            return scoring_move
+
+        # create the worst possible score/move tuple depending on if this is the maximizing or minimizing player
+        best_score = float("-inf") if maximizing_player else float("inf")
+        best_move = None
+        for move in legal_moves:
+            candidate_score, _ = self.alphabeta(game.forecast_move(move), depth-1, alpha, beta, not maximizing_player)
+            if maximizing_player:
+                candidate_score = max(best_score, candidate_score)
+            else:
+                candidate_score = min(best_score, candidate_score)
+
+            # if the best score was replaced, it is the best score at the moment
+            if best_score != candidate_score:
+                best_move = move
+                best_score = candidate_score
+                if maximizing_player:
+                    if best_score >= beta:
+                        return best_score, move
+                    alpha = max(alpha, best_score)
+                else:
+                    if best_score <= alpha:
+                        return best_score, move
+                    beta = min(beta, best_score)
+
+        return best_score, best_move
