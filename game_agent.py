@@ -50,7 +50,7 @@ def custom_score(game, player):
     # Nash equilibrium?
     theta0 = 0.0
     theta1 = 1.0
-    theta2 = -1.0
+    theta2 = -2.0
     my_moves = len(game.get_legal_moves(player))
     opponent_moves = len(game.get_legal_moves(game.get_opponent(player)))
 
@@ -153,7 +153,7 @@ class CustomPlayer:
                              game.active_player, maximizing_player)
                 _, move = self.minimax(game, self.search_depth, maximizing_player)
             elif self.method == 'alphabeta':
-                _, move = self.alphabeta(game, 3)
+                _, move = self.alphabeta(game, self.search_depth)
             else:
                 raise InvalidMethod()
 
@@ -298,6 +298,25 @@ class CustomPlayer:
                 to pass the project unit tests; you cannot call any other
                 evaluation function directly.
         """
+        if self.iterative:
+            __depth__ = 0
+            best_score = float("-inf")
+            best_move = (-1, -1)
+            self.iterative = False
+            while True:
+                __depth__ += 1
+                try:
+                    score, move = self.alphabeta(game, __depth__, alpha, beta, maximizing_player)
+                except (Timeout, TimeoutError):
+                    break
+                if move != (-1, -1):
+                    best_move = move
+                    best_score = score
+                else:
+                    break
+            self.iterative = True
+            return best_score, best_move
+
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
